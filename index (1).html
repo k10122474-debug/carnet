@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0B6E4F">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Carnet : qui me doit, à qui je dois</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Figtree:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#EEF5F0;--surface:#fff;--ink:#0E2A21;--mute:#52695F;--line:#D3E1D8;--in:#0B6E4F;--out:#B3261E;--amber:#E8A317;--onin:#fff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0C1A15;--surface:#142A22;--ink:#E8F3EC;--mute:#9DB8AA;--line:#244237;--in:#4FD1A0;--out:#FF8A80;--onin:#0C1A15}}
+:root[data-theme="dark"]{--bg:#0C1A15;--surface:#142A22;--ink:#E8F3EC;--mute:#9DB8AA;--line:#244237;--in:#4FD1A0;--out:#FF8A80;--onin:#0C1A15}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Figtree,system-ui,sans-serif;line-height:1.45}
+main{max-width:520px;margin:0 auto;padding:20px 16px 48px}
+h1{font-family:Fraunces,Georgia,serif;font-weight:800;font-size:2.3rem;letter-spacing:-.02em;margin:8px 0 14px;line-height:1}
+.tot{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.tot div{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+.tot span{display:block;color:var(--mute);font-size:.9rem}
+.tot b{font-family:Fraunces,Georgia,serif;font-size:1.7rem;line-height:1.15;word-break:break-word}
+.tot .a b{color:var(--in)}.tot .b b{color:var(--out)}
+section{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+h2{font-size:1.05rem;margin:0 0 10px;font-weight:600}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+input{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+input:focus,button:focus-visible{outline:2px solid var(--in);outline-offset:1px}
+.grow{flex:1 1 130px}
+.seg{display:flex;gap:6px;margin-bottom:10px}
+.seg label{flex:1;text-align:center;border:1px solid var(--line);border-radius:10px;padding:10px 6px;cursor:pointer}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg input:checked+span{font-weight:600}
+.seg label:has(input:checked){background:var(--in);color:var(--onin);border-color:var(--in)}
+button{font:inherit;font-weight:600;border:0;border-radius:10px;padding:10px 14px;background:var(--in);color:var(--onin);cursor:pointer}
+button.ghost{background:transparent;color:var(--mute);font-weight:400;padding:8px 8px}
+.tabs{display:flex;gap:6px;margin-bottom:6px}
+.tabs button{background:transparent;color:var(--mute);border:1px solid var(--line);font-weight:400}
+.tabs button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.item{padding:12px 0;border-top:1px solid var(--line)}
+.item:first-of-type{border-top:0}
+.top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.top small{display:block;color:var(--mute)}
+.amt{font-family:Fraunces,Georgia,serif;font-weight:800;font-size:1.3rem;white-space:nowrap}
+.in .amt{color:var(--in)}.out .amt{color:var(--out)}
+.pay{display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.pay input{width:120px;padding:7px 10px}
+.pay button:first-of-type{padding:7px 10px;background:var(--amber);color:#1b1500}
+.done .top{opacity:.55;text-decoration:line-through}
+.empty{color:var(--mute);margin:0}
+</style>
+</head>
+<body>
+<main>
+  <h1>Carnet</h1>
+  <div class="tot">
+    <div class="a"><span>On me doit</span><b id="tin">0</b></div>
+    <div class="b"><span>Je dois</span><b id="tout">0</b></div>
+  </div>
+
+  <section>
+    <h2>Nouvelle dette</h2>
+    <div class="seg">
+      <label><input type="radio" name="dir" value="in" checked><span>On me doit</span></label>
+      <label><input type="radio" name="dir" value="out"><span>Je dois</span></label>
+    </div>
+    <div class="row">
+      <input id="name" class="grow" placeholder="Nom de la personne" autocomplete="off">
+      <input id="amount" class="grow" inputmode="numeric" placeholder="Montant (FCFA)">
+    </div>
+    <div class="row"><input id="note" class="grow" placeholder="Pour quoi ? (facultatif)"></div>
+    <p id="err" role="alert" style="color:var(--out);min-height:1.2em;margin:4px 0 8px;font-size:.9rem"></p>
+    <button onclick="add()">Ajouter au carnet</button>
+  </section>
+
+  <section>
+    <div class="tabs" id="tabs">
+      <button data-f="all" class="on">Tout</button>
+      <button data-f="in">On me doit</button>
+      <button data-f="out">Je dois</button>
+    </div>
+    <div id="list"></div>
+  </section>
+</main>
+<script>
+const KEY="carnet-v1";
+let D=[];
+try{const r=localStorage.getItem(KEY);if(r)D=JSON.parse(r);}catch(e){}
+let F="all";
+const $=id=>document.getElementById(id);
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt=n=>n.toLocaleString("fr-FR")+" FCFA";
+const left=d=>d.amount-d.paid;
+
+function add(){
+  const name=$("name").value.trim();
+  const amount=parseInt(String($("amount").value).replace(/\s/g,""),10);
+  const dir=document.querySelector('input[name="dir"]:checked').value;
+  if(!name){$("err").textContent="Écris le nom de la personne.";return}
+  if(!amount||amount<=0){$("err").textContent="Entre un montant supérieur à zéro.";return}
+  D.push({id:Math.random().toString(36).slice(2,9),name,amount,paid:0,dir,note:$("note").value.trim(),date:new Date().toISOString()});
+  $("name").value="";$("amount").value="";$("note").value="";$("err").textContent="";
+  save();render();
+}
+function pay(id){
+  const d=D.find(x=>x.id===id);
+  const v=parseInt(String($("p_"+id).value).replace(/\s/g,""),10);
+  if(!v||v<=0)return;
+  d.paid=Math.min(d.amount,d.paid+v);save();render();
+}
+function settleAll(id){const d=D.find(x=>x.id===id);d.paid=d.amount;save();render()}
+function del(id){D=D.filter(x=>x.id!==id);save();render()}
+
+function render(){
+  const act=D.filter(d=>left(d)>0);
+  $("tin").textContent=fmt(act.filter(d=>d.dir==="in").reduce((s,d)=>s+left(d),0));
+  $("tout").textContent=fmt(act.filter(d=>d.dir==="out").reduce((s,d)=>s+left(d),0));
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.f===F));
+  const rows=D.filter(d=>F==="all"||d.dir===F).sort((a,b)=>(left(b)>0)-(left(a)>0)||b.date.localeCompare(a.date));
+  $("list").innerHTML=rows.length?rows.map(d=>{
+    const r=left(d),who=d.dir==="in"?esc(d.name)+" te doit":"Tu dois à "+esc(d.name);
+    const meta=[d.note?esc(d.note):"",new Date(d.date).toLocaleDateString("fr-FR")].filter(Boolean).join(", ");
+    return `<div class="item ${d.dir}${r?"":" done"}"><div class="top"><div><b>${who}</b><small>${meta}</small></div>
+      <div class="amt">${r?fmt(r):"Soldé"}</div></div>
+      <div class="pay">${r?`<input id="p_${d.id}" inputmode="numeric" placeholder="Paiement"><button onclick="pay('${d.id}')">Payé</button><button class="ghost" onclick="settleAll('${d.id}')">Tout soldé</button>`:""}
+      <button class="ghost" onclick="del('${d.id}')">Supprimer</button></div></div>`}).join("")
+    :`<p class="empty">Rien ici pour l’instant. Ajoute une première dette ci-dessus.</p>`;
+}
+$("tabs").addEventListener("click",e=>{if(e.target.dataset.f){F=e.target.dataset.f;render()}});
+render();
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
